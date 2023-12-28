@@ -9,12 +9,12 @@ from .models import URLMap
 
 
 def get_unique_short_id() -> str:
-    """Генератор короткой ссылки"""
-    while True:
-        symbols = string.ascii_letters + string.digits
-        short_id = ''.join(sample(symbols, 6))
-        if URLMap.query.filter_by(short=short_id).first() is None:
-            return short_id
+    """Рекурсиный генератор короткой ссылки"""
+    symbols = string.ascii_letters + string.digits
+    short_id = ''.join(sample(symbols, 6))
+    if URLMap.query.filter_by(short=short_id).first() is not None:
+        return get_unique_short_id()
+    return short_id
 
 
 @app.route('/', methods=['GET', 'POST'])
@@ -23,7 +23,7 @@ def index_view():
 
     if form.validate_on_submit():
         custom_id = form.custom_id.data
-        if URLMap.query.filter_by(short=custom_id).first() is not None:
+        if URLMap.query.filter_by(short=custom_id).first() is not None and custom_id != '':
             flash('Предложенный вариант короткой ссылки уже существует.')
             return render_template('main.html', form=form)
 
