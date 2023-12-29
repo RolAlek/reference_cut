@@ -1,4 +1,3 @@
-from collections import OrderedDict
 import re
 
 from flask import jsonify, request, url_for
@@ -25,7 +24,7 @@ def create_link():
         custom_id = get_unique_short_id()
 
     if (
-        custom_id and not re.match('^[a-zA-Z0-9]+$', custom_id) 
+        custom_id and not re.match('^[a-zA-Z0-9]+$', custom_id)
         or len(custom_id) > 16
     ):
         raise InvalidAPIUsage('Указано недопустимое имя для короткой ссылки')
