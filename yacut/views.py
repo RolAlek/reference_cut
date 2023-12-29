@@ -9,11 +9,12 @@ from .models import URLMap
 
 
 def get_unique_short_id() -> str:
-    """Рекурсиный генератор короткой ссылки"""
+    """Рекурсивный генератор короткой ссылки"""
+
     symbols = string.ascii_letters + string.digits
     short_id = ''.join(sample(symbols, 6))
     if URLMap.query.filter_by(short=short_id).first() is not None:
-        return get_unique_short_id()
+        get_unique_short_id()
     return short_id
 
 
@@ -23,26 +24,28 @@ def index_view():
 
     if form.validate_on_submit():
         custom_id = form.custom_id.data
-        if URLMap.query.filter_by(short=custom_id).first() is not None and custom_id != '':
+
+        if custom_id is None or custom_id == '':
+            custom_id = get_unique_short_id()
+
+        if URLMap.query.filter_by(short=custom_id).first() is not None:
             flash('Предложенный вариант короткой ссылки уже существует.')
             return render_template('main.html', form=form)
 
-        short_id = URLMap(
+        url_map = URLMap(
             original=form.original_link.data,
-            short=custom_id if custom_id != '' else get_unique_short_id()
+            short=custom_id
         )
 
-        db.session.add(short_id)
+        db.session.add(url_map)
         db.session.commit()
-        context = {'form': form, 'short_id': short_id}
+        context = {'form': form, 'short_id': url_map.short}
         return render_template('main.html', **context)
 
     return render_template('main.html', form=form)
 
 
-@app.route('/<string:short_id>')
-def redirect_view(short_id):
-    url = URLMap.query.filter_by(short=short_id).first()
-    if url is None:
-        abort(404)
-    return redirect(url.original)
+@app.route('/<path:short_id>')
+def redirect_to_original_view(short_id):
+    short_link = URLMap.query.filter_by(short=short_id).first_or_404()
+    return redirect(short_link.original)
