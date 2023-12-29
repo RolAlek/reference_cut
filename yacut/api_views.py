@@ -9,7 +9,6 @@ from .models import URLMap
 from .views import get_unique_short_id
 
 
-
 @app.route('/api/id/', methods=['POST'])
 def create_link():
     """Создание короткой ссылки."""
@@ -38,7 +37,6 @@ def create_link():
     short_link = url_for('redirect_to_original_view', short_id=link.short, _external=True)
     response_data = OrderedDict([('url', link.original), ('short_link', short_link)])
     return jsonify(response_data), 201
-    
 
 
 @app.route('/api/id/<path:short_id>/', methods=['GET'])
