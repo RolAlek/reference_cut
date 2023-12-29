@@ -10,6 +10,9 @@ class CutURLForm(FlaskForm):
     )
     custom_id = StringField(
         'Ваш вариант короткой ссылки',
-        validators=[Length(1, 16, 'Превышение допустимой длинны 16 символов'), Optional()]
+        validators=[
+            Length(1, 16, 'Превышение допустимой длинны 16 символов'),
+            Optional()
+        ]
     )
     submit = SubmitField('Создать')

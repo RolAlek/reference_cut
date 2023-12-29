@@ -24,19 +24,25 @@ def create_link():
     if custom_id is None or custom_id == '':
         custom_id = get_unique_short_id()
 
-    if custom_id and not re.match('^[a-zA-Z0-9]+$', custom_id) or len(custom_id) > 16:
+    if (
+        custom_id and not re.match('^[a-zA-Z0-9]+$', custom_id) 
+        or len(custom_id) > 16
+    ):
         raise InvalidAPIUsage('Указано недопустимое имя для короткой ссылки')
 
     if URLMap.query.filter_by(short=custom_id).first() is not None:
-        raise InvalidAPIUsage('Предложенный вариант короткой ссылки уже существует.')
+        raise InvalidAPIUsage(
+            'Предложенный вариант короткой ссылки уже существует.'
+        )
 
     link = URLMap(original=data.get('url'), short=custom_id)
     db.session.add(link)
     db.session.commit()
 
-    short_link = url_for('redirect_to_original_view', short_id=link.short, _external=True)
-    response_data = OrderedDict([('url', link.original), ('short_link', short_link)])
-    return jsonify(response_data), 201
+    short_link = url_for(
+        'redirect_to_original_view', short_id=link.short, _external=True
+    )
+    return jsonify({'url': link.original, 'short_link': short_link}), 201
 
 
 @app.route('/api/id/<path:short_id>/', methods=['GET'])
