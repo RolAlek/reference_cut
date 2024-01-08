@@ -1,8 +1,9 @@
+from http import HTTPStatus
 import re
 
 from flask import jsonify, request, url_for
 
-from . import app, db
+from . import app, db, MAX_LENGTH_SHORT_ID, PATTERN
 from .error_handlers import InvalidAPIUsage
 from .models import URLMap
 from .views import get_unique_short_id
@@ -20,13 +21,10 @@ def create_link():
         raise InvalidAPIUsage('"url" является обязательным полем!')
 
     custom_id = data.get('custom_id')
-    if custom_id is None or custom_id == '':
+    if not custom_id or custom_id == '':
         custom_id = get_unique_short_id()
 
-    if (
-        custom_id and not re.match('^[a-zA-Z0-9]+$', custom_id)
-        or len(custom_id) > 16
-    ):
+    if not re.match(PATTERN, custom_id) or len(custom_id) > MAX_LENGTH_SHORT_ID:
         raise InvalidAPIUsage('Указано недопустимое имя для короткой ссылки')
 
     if URLMap.query.filter_by(short=custom_id).first() is not None:
@@ -41,13 +39,13 @@ def create_link():
     short_link = url_for(
         'redirect_to_original_view', short_id=link.short, _external=True
     )
-    return jsonify({'url': link.original, 'short_link': short_link}), 201
+    return jsonify({'url': link.original, 'short_link': short_link}), HTTPStatus.CREATED
 
 
 @app.route('/api/id/<path:short_id>/', methods=['GET'])
 def get_original_link(short_id):
-    """Получение ориганальной ссылкой по короткому идентификатору."""
+    """Получение ориганальной ссылки по короткому идентификатору."""
     short_link = URLMap.query.filter_by(short=short_id).first()
     if short_link is None:
-        raise InvalidAPIUsage('Указанный id не найден', 404)
-    return jsonify(short_link.to_dict()), 200
+        raise InvalidAPIUsage('Указанный id не найден', HTTPStatus.NOT_FOUND)
+    return jsonify(short_link.to_dict()), HTTPStatus.OK
